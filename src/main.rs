@@ -23,22 +23,22 @@ fn main() {
         ])
         .add_objects(vec![
             Object::Sphere(
-                Transform::from_position(Vector3::new(0, -1, 3)),
+                Transform::new(Vector3::new(0, -1, 3)),
                 1.0,
                 Shader::Lit(Color::new(255, 0, 0)),
             ),
             Object::Sphere(
-                Transform::from_position(Vector3::new(2, 0, 4)),
+                Transform::new(Vector3::new(2, 0, 4)),
                 1.0,
                 Shader::Lit(Color::new(0, 0, 255)),
             ),
             Object::Sphere(
-                Transform::from_position(Vector3::new(-2, 0, 4)),
+                Transform::new(Vector3::new(-2, 0, 4)),
                 1.0,
                 Shader::Lit(Color::new(0, 255, 0)),
             ),
             Object::Sphere(
-                Transform::from_position(Vector3::new(0, -5001, 0)),
+                Transform::new(Vector3::new(0, -5001, 0)),
                 5000.0,
                 Shader::Lit(Color::new(255, 255, 0)),
             ),
