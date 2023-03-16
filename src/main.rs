@@ -1,6 +1,6 @@
 use canvas::Canvas;
 use light::Light;
-use math::{Color, Transform, Vector3};
+use math::{color::Color, transform::Transform, vector3::Vector3};
 use object::Object;
 use scene::create_scene;
 use shader::Shader;

@@ -1,9 +1,9 @@
 use std::path::Path;
 
 use image::{ImageResult, RgbImage};
-use num::{NumCast, ToPrimitive};
+use num::NumCast;
 
-use crate::math::{Color, Point};
+use crate::math::color::Color;
 
 pub struct Canvas {
     pub size: (u32, u32),
@@ -19,13 +19,13 @@ impl Canvas {
         }
     }
 
-    pub fn write_pixel(&mut self, position: Point, color: Color) {
-        let position = Point::new(
-            self.size.0.to_i32().unwrap() / 2 + position.x,
-            self.size.1.to_i32().unwrap() / 2 - position.y - 1,
-        );
-        self.image
-            .put_pixel(position.x as u32, position.y as u32, color.into())
+    pub fn write_pixel(&mut self, x: i32, y: i32, color: Color) {
+        let (width, height) = self.size;
+
+        let x = width as i32 / 2 + x;
+        let y = height as i32 / 2 - y - 1;
+
+        self.image.put_pixel(x as u32, y as u32, color.into())
     }
 
     pub fn save<P: AsRef<Path>>(&self, path: P) -> ImageResult<()> {

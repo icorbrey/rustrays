@@ -1,5 +1,7 @@
-use crate::math::{Ray, Transform, Vector3};
-use crate::shader::Shader;
+use crate::{
+    math::{ray::Ray, transform::Transform, vector3::Vector3},
+    shader::Shader,
+};
 
 #[derive(Copy, Clone)]
 pub enum Object {

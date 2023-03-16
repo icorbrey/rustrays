@@ -3,7 +3,9 @@ use crate::light::Light;
 use crate::object::Object;
 use crate::shader::compute_shading;
 
-use super::{Color, Ray, Vector3};
+use super::color::Color;
+use super::ray::Ray;
+use super::vector3::Vector3;
 
 pub fn get_raycast_direction(x: i32, y: i32, viewport_size: Vector3, canvas: &Canvas) -> Vector3 {
     let (width, height) = canvas.size;
@@ -18,7 +20,7 @@ pub fn trace_ray(objects: Vec<Object>, lights: Vec<Light>, ray: Ray, range: (f64
     let (object, t) = compute_closest_object(range, objects, ray);
     match object {
         Some(object) => compute_shading(object, lights, ray, t),
-        None => super::Color::new(255, 255, 255),
+        None => Color::new(255, 255, 255),
     }
 }
 

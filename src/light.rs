@@ -1,4 +1,4 @@
-use crate::math::Vector3;
+use crate::math::vector3::Vector3;
 
 #[derive(Copy, Clone)]
 pub enum Light {

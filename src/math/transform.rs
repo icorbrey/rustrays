@@ -1,4 +1,4 @@
-use crate::math::Vector3;
+use super::vector3::Vector3;
 
 #[derive(Copy, Clone)]
 pub struct Transform {

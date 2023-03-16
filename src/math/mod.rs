@@ -1,14 +1,5 @@
-mod color;
-mod point;
-mod ray;
+pub mod color;
+pub mod ray;
 pub mod trace;
-mod transform;
-mod vector2;
-mod vector3;
-
-pub use color::Color;
-pub use point::Point;
-pub use ray::Ray;
-pub use transform::Transform;
-pub use vector2::Vector2;
-pub use vector3::Vector3;
+pub mod transform;
+pub mod vector3;

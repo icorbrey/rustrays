@@ -2,10 +2,9 @@ use image::ImageResult;
 
 use crate::canvas::Canvas;
 use crate::light::Light;
-use crate::math::{
-    trace::{get_raycast_direction, trace_ray},
-    Point, Ray, Vector3,
-};
+use crate::math::ray::Ray;
+use crate::math::trace::{get_raycast_direction, trace_ray};
+use crate::math::vector3::Vector3;
 use crate::object::Object;
 
 pub fn create_scene() -> Scene<NeedsCanvas> {
@@ -103,7 +102,7 @@ impl Scene<ReadyToRender> {
                     Ray::new(self.state.origin, direction),
                     (1.0, f64::INFINITY),
                 );
-                self.state.canvas.write_pixel(Point::new(x, y), color);
+                self.state.canvas.write_pixel(x, y, color);
             }
         }
 
