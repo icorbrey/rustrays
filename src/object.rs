@@ -1,18 +1,18 @@
 use crate::{
-    math::{ray::Ray, transform::Transform, vector3::Vector3},
+    math::{ray::Ray, vector3::Vector3},
     shader::Shader,
 };
 
 #[derive(Copy, Clone)]
 pub enum Object {
-    Sphere(Transform, f64, Shader),
+    Sphere(Vector3, f64, Shader),
 }
 
 impl Object {
     pub fn compute_intersections(self, ray: Ray) -> (f64, f64) {
         match self {
-            Object::Sphere(transform, radius, _) => {
-                let offset = ray.origin - transform.position;
+            Object::Sphere(position, radius, _) => {
+                let offset = ray.origin - position;
 
                 let a = ray.direction.dot(ray.direction);
                 let b = 2.0 * offset.dot(ray.direction);
@@ -35,8 +35,8 @@ impl Object {
 
     pub fn compute_normal(self, ray: Ray, t: f64) -> Vector3 {
         match self {
-            Object::Sphere(transform, _, _) => {
-                (self.get_intersection(ray, t) - transform.position).normalized()
+            Object::Sphere(position, _, _) => {
+                (self.get_intersection(ray, t) - position).normalized()
             }
         }
     }

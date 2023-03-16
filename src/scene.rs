@@ -1,133 +1,108 @@
-use image::ImageResult;
+use std::marker::PhantomData;
 
-use crate::canvas::Canvas;
-use crate::light::Light;
-use crate::math::ray::Ray;
-use crate::math::trace::{get_raycast_direction, trace_ray};
-use crate::math::vector3::Vector3;
-use crate::object::Object;
+use crate::{canvas::Canvas, light::Light, math::vector3::Vector3, object::Object};
 
-pub fn create_scene() -> Scene<NeedsCanvas> {
-    Scene { state: NeedsCanvas }
+pub struct Scene {
+    pub objects: Vec<Object>,
+    pub lights: Vec<Light>,
+    pub viewport: Vector3,
+    pub origin: Vector3,
+    pub canvas: Canvas,
 }
 
-pub struct Scene<S: SceneState> {
-    state: S,
+pub struct UnresolvedScene {
+    pub viewport: Option<Vector3>,
+    pub origin: Option<Vector3>,
+    pub canvas: Option<Canvas>,
+    pub objects: Vec<Object>,
+    pub lights: Vec<Light>,
 }
 
-pub struct NeedsCanvas;
+pub fn build_scene() -> SceneBuilder<Unfulfilled, Unfulfilled> {
+    SceneBuilder {
+        scene: UnresolvedScene {
+            viewport: None,
+            origin: None,
+            canvas: None,
+            objects: vec![],
+            lights: vec![],
+        },
+        marker: PhantomData,
+    }
+}
 
-impl Scene<NeedsCanvas> {
-    pub fn add_canvas(self, canvas: Canvas) -> Scene<NeedsViewport> {
-        Scene {
-            state: NeedsViewport { canvas },
+pub struct SceneBuilder<HasCanvas, HasViewport>
+where
+    HasCanvas: SceneState,
+    HasViewport: SceneState,
+{
+    scene: UnresolvedScene,
+    marker: PhantomData<(HasCanvas, HasViewport)>,
+}
+
+impl<A> SceneBuilder<Unfulfilled, A>
+where
+    A: SceneState,
+{
+    pub fn add_canvas(mut self, canvas: Canvas) -> SceneBuilder<Fulfilled, A> {
+        self.scene.canvas = Some(canvas);
+        SceneBuilder {
+            scene: self.scene,
+            marker: PhantomData,
         }
     }
 }
 
-pub struct NeedsViewport {
-    canvas: Canvas,
-}
-
-impl Scene<NeedsViewport> {
-    pub fn add_viewport(self, origin: Vector3, viewport: Vector3) -> Scene<NeedsLights> {
-        Scene {
-            state: NeedsLights {
-                canvas: self.state.canvas,
-                origin,
-                viewport,
-            },
+impl<A> SceneBuilder<A, Unfulfilled>
+where
+    A: SceneState,
+{
+    pub fn add_viewport(
+        mut self,
+        viewport: Vector3,
+        origin: Vector3,
+    ) -> SceneBuilder<A, Fulfilled> {
+        self.scene.viewport = Some(viewport);
+        self.scene.origin = Some(origin);
+        SceneBuilder {
+            scene: self.scene,
+            marker: PhantomData,
         }
     }
 }
 
-pub struct NeedsLights {
-    canvas: Canvas,
-    origin: Vector3,
-    viewport: Vector3,
-}
+impl<A, B> SceneBuilder<A, B>
+where
+    A: SceneState,
+    B: SceneState,
+{
+    pub fn add_object(mut self, object: Object) -> SceneBuilder<A, B> {
+        self.scene.objects.push(object);
+        self
+    }
 
-impl Scene<NeedsLights> {
-    pub fn add_lights(self, lights: Vec<Light>) -> Scene<NeedsObjects> {
-        Scene {
-            state: NeedsObjects {
-                canvas: self.state.canvas,
-                origin: self.state.origin,
-                viewport: self.state.viewport,
-                lights,
-            },
-        }
+    pub fn add_light(mut self, light: Light) -> SceneBuilder<A, B> {
+        self.scene.lights.push(light);
+        self
     }
 }
 
-pub struct NeedsObjects {
-    canvas: Canvas,
-    origin: Vector3,
-    viewport: Vector3,
-    lights: Vec<Light>,
-}
-
-impl Scene<NeedsObjects> {
-    pub fn add_objects(self, objects: Vec<Object>) -> Scene<ReadyToRender> {
+impl SceneBuilder<Fulfilled, Fulfilled> {
+    pub fn crystalize(self) -> Scene {
         Scene {
-            state: ReadyToRender {
-                canvas: self.state.canvas,
-                origin: self.state.origin,
-                viewport: self.state.viewport,
-                lights: self.state.lights,
-                objects,
-            },
+            viewport: self.scene.viewport.unwrap(),
+            origin: self.scene.origin.unwrap(),
+            canvas: self.scene.canvas.unwrap(),
+            objects: self.scene.objects,
+            lights: self.scene.lights,
         }
-    }
-}
-
-pub struct ReadyToRender {
-    canvas: Canvas,
-    origin: Vector3,
-    viewport: Vector3,
-    lights: Vec<Light>,
-    objects: Vec<Object>,
-}
-
-impl Scene<ReadyToRender> {
-    pub fn render(mut self) -> Scene<ReadyToSave> {
-        let (width, height) = self.state.canvas.size;
-        for x in (-1 * width as i32 / 2)..(width as i32 / 2) {
-            for y in (-1 * height as i32 / 2)..(height as i32 / 2) {
-                let direction =
-                    get_raycast_direction(x, y, self.state.viewport, &self.state.canvas);
-                let color = trace_ray(
-                    self.state.objects.clone(),
-                    self.state.lights.clone(),
-                    Ray::new(self.state.origin, direction),
-                    (1.0, f64::INFINITY),
-                );
-                self.state.canvas.write_pixel(x, y, color);
-            }
-        }
-
-        Scene {
-            state: ReadyToSave {
-                canvas: self.state.canvas,
-            },
-        }
-    }
-}
-
-pub struct ReadyToSave {
-    canvas: Canvas,
-}
-
-impl Scene<ReadyToSave> {
-    pub fn save(self, path: &str) -> ImageResult<()> {
-        self.state.canvas.save(path)
     }
 }
 
 pub trait SceneState {}
-impl SceneState for NeedsCanvas {}
-impl SceneState for NeedsViewport {}
-impl SceneState for NeedsLights {}
-impl SceneState for NeedsObjects {}
-impl SceneState for ReadyToRender {}
-impl SceneState for ReadyToSave {}
+
+pub struct Fulfilled;
+pub struct Unfulfilled;
+
+impl SceneState for Fulfilled {}
+impl SceneState for Unfulfilled {}
