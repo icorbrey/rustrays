@@ -43,7 +43,8 @@ fn main() {
         ))
         .crystalize();
 
-    if let Err(e) = render(scene) {
-        println!("Could not save: {}", e)
+    match render(scene) {
+        Ok(()) => println!("Saved successfully."),
+        Err(e) => println!("Could not save: {}", e),
     }
 }
