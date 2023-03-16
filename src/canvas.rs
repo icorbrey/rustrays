@@ -6,25 +6,26 @@ use num::NumCast;
 use crate::math::color::Color;
 
 pub struct Canvas {
-    pub size: (u32, u32),
+    pub width: u32,
+    pub height: u32,
     image: RgbImage,
 }
 
 impl Canvas {
-    pub fn new(size: (impl NumCast, impl NumCast)) -> Self {
-        let size = (size.0.to_u32().unwrap(), size.1.to_u32().unwrap());
+    /// Initializes a new canvas with the given width and height
+    pub fn new(width: impl NumCast, height: impl NumCast) -> Self {
+        let width = width.to_u32().unwrap();
+        let height = height.to_u32().unwrap();
         Canvas {
-            size,
-            image: RgbImage::new(size.0, size.1),
+            image: RgbImage::new(width, height),
+            height,
+            width,
         }
     }
 
     pub fn write_pixel(&mut self, x: i32, y: i32, color: Color) {
-        let (width, height) = self.size;
-
-        let x = width as i32 / 2 + x;
-        let y = height as i32 / 2 - y - 1;
-
+        let x = self.width as i32 / 2 + x;
+        let y = self.height as i32 / 2 - y - 1;
         self.image.put_pixel(x as u32, y as u32, color.into())
     }
 

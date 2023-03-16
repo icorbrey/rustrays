@@ -10,7 +10,25 @@ pub struct Scene {
     pub canvas: Canvas,
 }
 
-pub struct UnresolvedScene {
+impl Scene {
+    pub fn new() -> UnresolvedScene<Unfulfilled, Unfulfilled> {
+        UnresolvedScene {
+            marker: PhantomData,
+            objects: vec![],
+            lights: vec![],
+            viewport: None,
+            origin: None,
+            canvas: None,
+        }
+    }
+}
+
+pub struct UnresolvedScene<HasCanvas, HasViewport>
+where
+    HasCanvas: SceneRequirement,
+    HasViewport: SceneRequirement,
+{
+    pub marker: PhantomData<(HasCanvas, HasViewport)>,
     pub viewport: Option<Vector3>,
     pub origin: Option<Vector3>,
     pub canvas: Option<Canvas>,
@@ -18,91 +36,70 @@ pub struct UnresolvedScene {
     pub lights: Vec<Light>,
 }
 
-pub fn build_scene() -> SceneBuilder<Unfulfilled, Unfulfilled> {
-    SceneBuilder {
-        scene: UnresolvedScene {
-            viewport: None,
-            origin: None,
-            canvas: None,
-            objects: vec![],
-            lights: vec![],
-        },
-        marker: PhantomData,
-    }
-}
-
-pub struct SceneBuilder<HasCanvas, HasViewport>
+impl<A> UnresolvedScene<Unfulfilled, A>
 where
-    HasCanvas: SceneState,
-    HasViewport: SceneState,
+    A: SceneRequirement,
 {
-    scene: UnresolvedScene,
-    marker: PhantomData<(HasCanvas, HasViewport)>,
-}
-
-impl<A> SceneBuilder<Unfulfilled, A>
-where
-    A: SceneState,
-{
-    pub fn add_canvas(mut self, canvas: Canvas) -> SceneBuilder<Fulfilled, A> {
-        self.scene.canvas = Some(canvas);
-        SceneBuilder {
-            scene: self.scene,
+    pub fn add_canvas(self, canvas: Canvas) -> UnresolvedScene<Fulfilled, A> {
+        UnresolvedScene {
+            viewport: self.viewport,
+            objects: self.objects,
+            canvas: Some(canvas),
+            origin: self.origin,
+            lights: self.lights,
             marker: PhantomData,
         }
     }
 }
 
-impl<A> SceneBuilder<A, Unfulfilled>
+impl<A> UnresolvedScene<A, Unfulfilled>
 where
-    A: SceneState,
+    A: SceneRequirement,
 {
-    pub fn add_viewport(
-        mut self,
-        viewport: Vector3,
-        origin: Vector3,
-    ) -> SceneBuilder<A, Fulfilled> {
-        self.scene.viewport = Some(viewport);
-        self.scene.origin = Some(origin);
-        SceneBuilder {
-            scene: self.scene,
+    pub fn add_viewport(self, viewport: Vector3, origin: Vector3) -> UnresolvedScene<A, Fulfilled> {
+        UnresolvedScene {
+            viewport: Some(viewport),
+            objects: self.objects,
+            origin: Some(origin),
+            canvas: self.canvas,
+            lights: self.lights,
             marker: PhantomData,
         }
     }
 }
 
-impl<A, B> SceneBuilder<A, B>
+impl<A, B> UnresolvedScene<A, B>
 where
-    A: SceneState,
-    B: SceneState,
+    A: SceneRequirement,
+    B: SceneRequirement,
 {
-    pub fn add_object(mut self, object: Object) -> SceneBuilder<A, B> {
-        self.scene.objects.push(object);
+    pub fn add_object(mut self, object: Object) -> UnresolvedScene<A, B> {
+        self.objects.push(object);
         self
     }
 
-    pub fn add_light(mut self, light: Light) -> SceneBuilder<A, B> {
-        self.scene.lights.push(light);
+    pub fn add_light(mut self, light: Light) -> UnresolvedScene<A, B> {
+        self.lights.push(light);
         self
     }
 }
 
-impl SceneBuilder<Fulfilled, Fulfilled> {
+impl UnresolvedScene<Fulfilled, Fulfilled> {
     pub fn crystalize(self) -> Scene {
         Scene {
-            viewport: self.scene.viewport.unwrap(),
-            origin: self.scene.origin.unwrap(),
-            canvas: self.scene.canvas.unwrap(),
-            objects: self.scene.objects,
-            lights: self.scene.lights,
+            viewport: self.viewport.unwrap(),
+            origin: self.origin.unwrap(),
+            canvas: self.canvas.unwrap(),
+            objects: self.objects,
+            lights: self.lights,
         }
     }
 }
 
-pub trait SceneState {}
+pub trait SceneRequirement {}
 
 pub struct Fulfilled;
 pub struct Unfulfilled;
 
-impl SceneState for Fulfilled {}
-impl SceneState for Unfulfilled {}
+impl SceneRequirement for Fulfilled {}
+impl SceneRequirement for Unfulfilled {}

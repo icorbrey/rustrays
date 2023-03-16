@@ -2,7 +2,7 @@ use canvas::Canvas;
 use light::Light;
 use math::{color::Color, vector3::Vector3};
 use object::Object;
-use scene::build_scene;
+use scene::Scene;
 use shader::Shader;
 use trace::render;
 
@@ -15,8 +15,8 @@ mod shader;
 mod trace;
 
 fn main() {
-    let scene = build_scene()
-        .add_canvas(Canvas::new((1000, 1000)))
+    let scene = Scene::new()
+        .add_canvas(Canvas::new(1000, 1000))
         .add_viewport(Vector3::new(1, 1, 1), Vector3::new(0, 0, 0))
         .add_light(Light::Ambient(0.2))
         .add_light(Light::Point(0.6, Vector3::new(2, 1, 0)))

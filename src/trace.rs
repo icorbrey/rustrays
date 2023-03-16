@@ -8,9 +8,8 @@ use crate::{
 };
 
 pub fn render(mut scene: Scene) -> ImageResult<()> {
-    let (width, height) = scene.canvas.size;
-    for x in (-1 * width as i32 / 2)..(width as i32 / 2) {
-        for y in (-1 * height as i32 / 2)..(height as i32 / 2) {
+    for x in (-1 * scene.canvas.width as i32 / 2)..(scene.canvas.width as i32 / 2) {
+        for y in (-1 * scene.canvas.height as i32 / 2)..(scene.canvas.height as i32 / 2) {
             let direction = get_raycast(&scene, x, y);
             let color = trace_ray(&scene, direction);
             scene.canvas.write_pixel(x, y, color);
@@ -20,12 +19,11 @@ pub fn render(mut scene: Scene) -> ImageResult<()> {
 }
 
 fn get_raycast(scene: &Scene, x: i32, y: i32) -> Ray {
-    let (width, height) = scene.canvas.size;
     Ray::new(
         scene.origin,
         Vector3::new(
-            x as f64 * scene.viewport.x / width as f64,
-            y as f64 * scene.viewport.y / height as f64,
+            x as f64 * scene.viewport.x / scene.canvas.width as f64,
+            y as f64 * scene.viewport.y / scene.canvas.height as f64,
             scene.viewport.z,
         ),
     )
