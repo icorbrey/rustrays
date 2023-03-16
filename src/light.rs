@@ -11,19 +11,24 @@ pub fn compute_light_contribution(light: Light, position: Vector3, normal: Vecto
     match light {
         Light::Ambient(intensity) => intensity,
         Light::Point(intensity, origin) => {
-            let offset = origin - position;
-            if normal.dot(offset) > 0.0 {
-                intensity * normal.dot(offset) / (normal.magnitude() * offset.magnitude())
-            } else {
-                0.0
+            let direction = origin - position;
+
+            // Don't shine light on surfaces pointing away from the light
+            if normal.dot(direction) < 0.0 {
+                return 0.0;
             }
+
+            // Light contribution is the highest when facing the light source
+            intensity * direction.angle_from(normal).cos()
         }
         Light::Directional(intensity, direction) => {
-            if normal.dot(direction) > 0.0 {
-                intensity * normal.dot(direction) / (normal.magnitude() * direction.magnitude())
-            } else {
-                0.0
+            // Don't shine light on surfaces pointing away from the light
+            if normal.dot(direction) < 0.0 {
+                return 0.0;
             }
+
+            // Light contribution is the highest when facing the light source
+            intensity * direction.angle_from(normal).cos()
         }
     }
 }

@@ -13,7 +13,7 @@ pub enum Shader {
 pub fn compute_shading(scene: &Scene, object: Object, ray: Ray, t: f64) -> Color {
     match object.get_shader() {
         Shader::Lit(color) => {
-            let position = object.get_intersection(ray, t);
+            let position = ray.get_point(t);
             let normal = object.compute_normal(ray, t);
             let illumination = (scene.lights.clone().into_iter())
                 .map(|light| compute_light_contribution(light, position, normal))

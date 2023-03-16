@@ -20,23 +20,21 @@ impl Object {
 
                 let d = b.powf(2.0) - 4.0 * a * c;
 
-                if d >= 0.0 {
-                    ((-b + d.sqrt()) / (2.0 * a), (-b - d.sqrt()) / (2.0 * a))
-                } else {
-                    (f64::INFINITY, f64::INFINITY)
+                // Ray does not intersect sphere if discriminant is negative
+                if d < 0.0 {
+                    return (f64::INFINITY, f64::INFINITY);
                 }
+
+                ((-b + d.sqrt()) / (2.0 * a), (-b - d.sqrt()) / (2.0 * a))
             }
         }
-    }
-
-    pub fn get_intersection(self, ray: Ray, t: f64) -> Vector3 {
-        ray.origin + ray.direction * t
     }
 
     pub fn compute_normal(self, ray: Ray, t: f64) -> Vector3 {
         match self {
             Object::Sphere(position, _, _) => {
-                (self.get_intersection(ray, t) - position).normalized()
+                // Normal vector always faces directly away from the center
+                (ray.get_point(t) - position).normalized()
             }
         }
     }
