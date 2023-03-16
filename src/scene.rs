@@ -98,8 +98,8 @@ impl Scene<ReadyToRender> {
                 let direction =
                     get_raycast_direction(x, y, self.state.viewport, &self.state.canvas);
                 let color = trace_ray(
-                    &self.state.objects,
-                    &self.state.lights,
+                    self.state.objects.clone(),
+                    self.state.lights.clone(),
                     Ray::new(self.state.origin, direction),
                     (1.0, f64::INFINITY),
                 );
