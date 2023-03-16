@@ -1,9 +1,6 @@
-use crate::{
-    light::compute_light_contribution,
-    math::{color::Color, ray::Ray},
-    object::Object,
-    scene::Scene,
-};
+use crate::math::{color::Color, ray::Ray};
+
+use super::{light::compute_light_contribution, object::Object, scene::Scene};
 
 #[derive(Copy, Clone)]
 pub enum Shader {

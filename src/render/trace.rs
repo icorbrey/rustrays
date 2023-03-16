@@ -2,9 +2,7 @@ use image::ImageResult;
 
 use crate::{
     math::{color::Color, ray::Ray, vector3::Vector3},
-    object::Object,
-    scene::Scene,
-    shader::compute_shading,
+    physical::{object::Object, scene::Scene, shader::compute_shading},
 };
 
 pub fn render(mut scene: Scene) -> ImageResult<()> {

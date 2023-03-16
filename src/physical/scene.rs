@@ -1,6 +1,8 @@
 use std::marker::PhantomData;
 
-use crate::{canvas::Canvas, light::Light, math::vector3::Vector3, object::Object};
+use crate::math::vector3::Vector3;
+
+use super::{canvas::Canvas, light::Light, object::Object};
 
 pub struct Scene {
     pub objects: Vec<Object>,

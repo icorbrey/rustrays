@@ -1,18 +1,10 @@
-use canvas::Canvas;
-use light::Light;
 use math::{color::Color, vector3::Vector3};
-use object::Object;
-use scene::Scene;
-use shader::Shader;
-use trace::render;
+use physical::{canvas::Canvas, light::Light, object::Object, scene::Scene, shader::Shader};
+use render::trace::render;
 
-mod canvas;
-mod light;
 mod math;
-mod object;
-mod scene;
-mod shader;
-mod trace;
+mod physical;
+mod render;
 
 fn main() {
     let scene = Scene::new()
