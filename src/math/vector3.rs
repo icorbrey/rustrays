@@ -87,6 +87,14 @@ impl ops::Mul<Vector3> for f64 {
     }
 }
 
+impl ops::Neg for Vector3 {
+    type Output = Vector3;
+
+    fn neg(self) -> Self::Output {
+        self * -1
+    }
+}
+
 impl<N> ops::Div<N> for Vector3
 where
     N: NumCast,

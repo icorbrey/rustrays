@@ -28,15 +28,23 @@ fn get_raycast(scene: &Scene, x: i32, y: i32) -> Ray {
 }
 
 fn trace_ray(scene: &Scene, ray: Ray) -> Color {
-    let (object, t) = compute_closest_object(scene, ray);
+    let (object, t) = compute_closest_object_to_viewport(scene, ray);
     match object {
         Some(object) => compute_shading(scene, object, ray, t),
         None => Color::new(255, 255, 255),
     }
 }
 
-pub fn compute_closest_object(scene: &Scene, ray: Ray) -> (Option<Object>, f64) {
-    let (t_min, t_max) = (scene.viewport.z, f64::INFINITY);
+pub fn compute_closest_object_to_viewport(scene: &Scene, ray: Ray) -> (Option<Object>, f64) {
+    compute_closest_object(scene, ray, scene.viewport.z, f64::INFINITY)
+}
+
+pub fn compute_closest_object(
+    scene: &Scene,
+    ray: Ray,
+    t_min: f64,
+    t_max: f64,
+) -> (Option<Object>, f64) {
     let mut target: (Option<Object>, f64) = (None, f64::INFINITY);
 
     for object in &scene.objects {

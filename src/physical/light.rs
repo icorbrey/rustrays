@@ -1,4 +1,9 @@
-use crate::math::vector3::Vector3;
+use crate::{
+    math::{ray::Ray, vector3::Vector3},
+    render::trace::compute_closest_object,
+};
+
+use super::scene::Scene;
 
 #[derive(Copy, Clone)]
 pub enum Light {
@@ -7,7 +12,27 @@ pub enum Light {
     Directional(f64, Vector3),
 }
 
-pub fn compute_light_contribution(light: Light, position: Vector3, normal: Vector3) -> f64 {
+pub fn compute_is_occluded(scene: &Scene, light: Light, position: Vector3) -> bool {
+    match light {
+        Light::Ambient(_) => false,
+        Light::Point(_, light_origin) => {
+            let ray = Ray::new(position, light_origin - position);
+            if let (Some(_), _) = compute_closest_object(scene, ray, 0.001, 1.0) {
+                return true;
+            }
+            false
+        }
+        Light::Directional(_, direction) => {
+            let ray = Ray::new(position, direction);
+            if let (Some(_), _) = compute_closest_object(scene, ray, 0.001, f64::INFINITY) {
+                return true;
+            }
+            false
+        }
+    }
+}
+
+pub fn compute_diffusion(light: Light, position: Vector3, normal: Vector3) -> f64 {
     match light {
         Light::Ambient(intensity) => intensity,
         Light::Point(intensity, origin) => {
