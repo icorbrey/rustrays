@@ -1,14 +1,16 @@
-use crate::math::{color::Color, ray::Ray};
+use crate::math::{color::Color, raycast::Raycast};
 
 use super::{
     light::{compute_diffusion, compute_is_occluded},
-    object::Object,
     scene::Scene,
 };
 
 #[derive(Copy, Clone)]
 pub enum Shader {
-    Lit(VisualProperties),
+    Lit {
+        specular_reflection: Option<f64>,
+        color: Color,
+    },
 }
 
 #[derive(Copy, Clone)]
@@ -17,23 +19,25 @@ pub struct VisualProperties {
     pub specular_reflection: Option<f64>,
 }
 
-pub fn compute_shading(scene: &Scene, object: Object, ray: Ray, t: f64) -> Color {
-    match object.get_shader() {
-        Shader::Lit(properties) => {
-            let position = ray.get_point(t);
-            let normal = object.compute_normal(ray, t);
+pub fn compute_shading(scene: &Scene, raycast: Raycast) -> Color {
+    match raycast {
+        Raycast::Intersection { object, point, .. } => match object.get_shader() {
+            Shader::Lit { color, .. } => {
+                let normal = object.compute_normal(point);
 
-            let mut illumination = 0.0;
+                let mut illumination = 0.0;
 
-            for light in &scene.lights {
-                if compute_is_occluded(scene, *light, position) {
-                    continue;
+                for light in &scene.lights {
+                    if compute_is_occluded(scene, *light, point) {
+                        continue;
+                    }
+
+                    illumination += compute_diffusion(*light, point, normal);
                 }
 
-                illumination += compute_diffusion(*light, position, normal);
+                color * illumination
             }
-
-            properties.color * illumination
-        }
+        },
+        Raycast::NoIntersection => Color::new(255, 255, 255),
     }
 }
