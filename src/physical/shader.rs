@@ -9,14 +9,9 @@ use super::{
 pub enum Shader {
     Lit {
         specular_reflection: Option<f64>,
+        reflectivity: f64,
         color: Color,
     },
-}
-
-#[derive(Copy, Clone)]
-pub struct VisualProperties {
-    pub color: Color,
-    pub specular_reflection: Option<f64>,
 }
 
 pub fn compute_shading(scene: &Scene, raycast: Option<Raycast>) -> Color {
@@ -25,6 +20,7 @@ pub fn compute_shading(scene: &Scene, raycast: Option<Raycast>) -> Color {
             Shader::Lit {
                 color,
                 specular_reflection,
+                ..
             } => {
                 let mut illumination = 0.0;
 

@@ -25,6 +25,7 @@ fn main() {
             shader: Shader::Lit {
                 color: Color::new(255, 0, 0),
                 specular_reflection: Some(500.0),
+                reflectivity: 0.2,
             },
         })
         .add_object(Object::Sphere {
@@ -33,6 +34,7 @@ fn main() {
             shader: Shader::Lit {
                 color: Color::new(0, 0, 255),
                 specular_reflection: Some(500.0),
+                reflectivity: 0.3,
             },
         })
         .add_object(Object::Sphere {
@@ -41,6 +43,7 @@ fn main() {
             shader: Shader::Lit {
                 color: Color::new(0, 255, 0),
                 specular_reflection: Some(10.0),
+                reflectivity: 0.4,
             },
         })
         .add_object(Object::Sphere {
@@ -49,6 +52,7 @@ fn main() {
             shader: Shader::Lit {
                 color: Color::new(255, 255, 0),
                 specular_reflection: Some(1000.0),
+                reflectivity: 0.5,
             },
         })
         .crystalize();
