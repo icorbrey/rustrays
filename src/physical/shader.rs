@@ -1,7 +1,7 @@
 use crate::math::{color::Color, raycast::Raycast};
 
 use super::{
-    light::{compute_diffusion, compute_is_occluded},
+    light::{compute_diffusion, compute_is_occluded, compute_specular_reflection},
     scene::Scene,
 };
 
@@ -22,7 +22,10 @@ pub struct VisualProperties {
 pub fn compute_shading(scene: &Scene, raycast: Option<Raycast>) -> Color {
     match raycast {
         Some(raycast) => match raycast.object.get_shader() {
-            Shader::Lit { color, .. } => {
+            Shader::Lit {
+                color,
+                specular_reflection,
+            } => {
                 let mut illumination = 0.0;
 
                 for light in &scene.lights {
@@ -31,6 +34,10 @@ pub fn compute_shading(scene: &Scene, raycast: Option<Raycast>) -> Color {
                     }
 
                     illumination += compute_diffusion(*light, raycast);
+
+                    if let Some(s) = specular_reflection {
+                        illumination += compute_specular_reflection(*light, raycast, s);
+                    }
                 }
 
                 color * illumination

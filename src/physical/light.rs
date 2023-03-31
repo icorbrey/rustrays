@@ -9,37 +9,63 @@ pub enum Light {
     Directional { intensity: f64, direction: Vector3 },
 }
 
-pub fn compute_is_occluded(scene: &Scene, light: Light, raycast: Raycast) -> bool {
-    let light_direction = match light {
-        Light::Point { origin, .. } => origin - raycast.point,
-        Light::Directional { direction, .. } => direction,
-        Light::Ambient { .. } => return false,
-    };
-
-    Raycast::compute(
-        scene,
-        raycast.point,
-        light_direction,
-        (0.001, f64::INFINITY),
-    )
-    .is_some()
-}
-
-pub fn compute_diffusion(light: Light, raycast: Raycast) -> f64 {
-    let (intensity, light_direction) = match light {
-        Light::Point { intensity, origin } => (intensity, origin - raycast.point),
+pub fn get_light_details(light: Light, raycast: Raycast) -> (f64, Option<Vector3>) {
+    match light {
+        Light::Ambient { intensity } => (intensity, None),
+        Light::Point { intensity, origin } => (intensity, Some(origin - raycast.point)),
         Light::Directional {
             intensity,
             direction,
-        } => (intensity, direction),
-        Light::Ambient { intensity } => return intensity,
-    };
-
-    // Don't shine light on surfaces pointing away from the light
-    if raycast.normal.dot(light_direction) < 0.0 {
-        return 0.0;
+        } => (intensity, Some(direction)),
     }
+}
 
-    // Light contribution is the highest when facing the light source
-    intensity * light_direction.angle_from(raycast.normal).cos()
+pub fn compute_is_occluded(scene: &Scene, light: Light, raycast: Raycast) -> bool {
+    if let (_, Some(direction)) = get_light_details(light, raycast) {
+        Raycast::compute(scene, raycast.point, direction, (0.001, f64::INFINITY)).is_some()
+    } else {
+        false
+    }
+}
+
+pub fn compute_diffusion(light: Light, raycast: Raycast) -> f64 {
+    let (intensity, direction) = get_light_details(light, raycast);
+
+    if let Some(direction) = direction {
+        // Don't shine light on surfaces pointing away from the light
+        if raycast.normal.dot(direction) < 0.0 {
+            return 0.0;
+        }
+
+        // Light contribution is the highest when facing the light source
+        intensity * direction.angle_from(raycast.normal).cos()
+    } else {
+        intensity
+    }
+}
+
+pub fn compute_specular_reflection(
+    light: Light,
+    raycast: Raycast,
+    specular_reflection: f64,
+) -> f64 {
+    let (intensity, direction) = get_light_details(light, raycast);
+
+    if let Some(direction) = direction {
+        let reflection = raycast.normal * raycast.normal.dot(direction) * 2 - direction;
+
+        // Don't reflect off of surfaces pointing away from the light
+        if reflection.dot(raycast.view) < 0.0 {
+            return 0.0;
+        }
+
+        // Light contribution is the highest when the light reflects directly into the camera
+        intensity
+            * reflection
+                .angle_from(raycast.view)
+                .cos()
+                .powf(specular_reflection)
+    } else {
+        0.0
+    }
 }
