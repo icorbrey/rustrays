@@ -2,19 +2,23 @@ use crate::physical::{object::Object, scene::Scene};
 
 use super::vector3::Vector3;
 
-pub enum Raycast {
-    Intersection {
-        direction: Vector3,
-        origin: Vector3,
-        object: Object,
-        point: Vector3,
-        view: Vector3,
-    },
-    NoIntersection,
+#[derive(Copy, Clone)]
+pub struct Raycast {
+    pub direction: Vector3,
+    pub normal: Vector3,
+    pub origin: Vector3,
+    pub object: Object,
+    pub point: Vector3,
+    pub view: Vector3,
 }
 
 impl Raycast {
-    pub fn compute(scene: &Scene, origin: Vector3, direction: Vector3, range: (f64, f64)) -> Self {
+    pub fn compute(
+        scene: &Scene,
+        origin: Vector3,
+        direction: Vector3,
+        range: (f64, f64),
+    ) -> Option<Self> {
         let mut closest_object: Option<Object> = None;
         let mut closest_t: Option<f64> = None;
 
@@ -37,17 +41,19 @@ impl Raycast {
         }
 
         if closest_object.is_none() {
-            return Raycast::NoIntersection;
+            return None;
         }
 
         let point = origin + direction * closest_t.unwrap();
+        let object = closest_object.unwrap();
 
-        Raycast::Intersection {
-            object: closest_object.unwrap(),
+        Some(Raycast {
+            normal: object.compute_normal(point),
             view: -direction,
             direction,
+            object,
             origin,
             point,
-        }
+        })
     }
 }

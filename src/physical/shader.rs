@@ -19,25 +19,23 @@ pub struct VisualProperties {
     pub specular_reflection: Option<f64>,
 }
 
-pub fn compute_shading(scene: &Scene, raycast: Raycast) -> Color {
+pub fn compute_shading(scene: &Scene, raycast: Option<Raycast>) -> Color {
     match raycast {
-        Raycast::Intersection { object, point, .. } => match object.get_shader() {
+        Some(raycast) => match raycast.object.get_shader() {
             Shader::Lit { color, .. } => {
-                let normal = object.compute_normal(point);
-
                 let mut illumination = 0.0;
 
                 for light in &scene.lights {
-                    if compute_is_occluded(scene, *light, point) {
+                    if compute_is_occluded(scene, *light, raycast) {
                         continue;
                     }
 
-                    illumination += compute_diffusion(*light, point, normal);
+                    illumination += compute_diffusion(*light, raycast);
                 }
 
                 color * illumination
             }
         },
-        Raycast::NoIntersection => Color::new(255, 255, 255),
+        None => Color::new(255, 255, 255),
     }
 }

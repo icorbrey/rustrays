@@ -9,49 +9,37 @@ pub enum Light {
     Directional { intensity: f64, direction: Vector3 },
 }
 
-pub fn compute_is_occluded(scene: &Scene, light: Light, position: Vector3) -> bool {
-    match light {
-        Light::Ambient { .. } => false,
-        Light::Point { origin, .. } => {
-            match Raycast::compute(scene, position, origin - position, (0.001, f64::INFINITY)) {
-                Raycast::Intersection { .. } => true,
-                Raycast::NoIntersection => false,
-            }
-        }
-        Light::Directional { direction, .. } => {
-            match Raycast::compute(scene, position, direction, (0.001, f64::INFINITY)) {
-                Raycast::Intersection { .. } => true,
-                Raycast::NoIntersection => false,
-            }
-        }
-    }
+pub fn compute_is_occluded(scene: &Scene, light: Light, raycast: Raycast) -> bool {
+    let light_direction = match light {
+        Light::Point { origin, .. } => origin - raycast.point,
+        Light::Directional { direction, .. } => direction,
+        Light::Ambient { .. } => return false,
+    };
+
+    Raycast::compute(
+        scene,
+        raycast.point,
+        light_direction,
+        (0.001, f64::INFINITY),
+    )
+    .is_some()
 }
 
-pub fn compute_diffusion(light: Light, position: Vector3, normal: Vector3) -> f64 {
-    match light {
-        Light::Ambient { intensity } => intensity,
-        Light::Point { intensity, origin } => {
-            let direction = origin - position;
-
-            // Don't shine light on surfaces pointing away from the light
-            if normal.dot(direction) < 0.0 {
-                return 0.0;
-            }
-
-            // Light contribution is the highest when facing the light source
-            intensity * direction.angle_from(normal).cos()
-        }
+pub fn compute_diffusion(light: Light, raycast: Raycast) -> f64 {
+    let (intensity, light_direction) = match light {
+        Light::Point { intensity, origin } => (intensity, origin - raycast.point),
         Light::Directional {
             intensity,
             direction,
-        } => {
-            // Don't shine light on surfaces pointing away from the light
-            if normal.dot(direction) < 0.0 {
-                return 0.0;
-            }
+        } => (intensity, direction),
+        Light::Ambient { intensity } => return intensity,
+    };
 
-            // Light contribution is the highest when facing the light source
-            intensity * direction.angle_from(normal).cos()
-        }
+    // Don't shine light on surfaces pointing away from the light
+    if raycast.normal.dot(light_direction) < 0.0 {
+        return 0.0;
     }
+
+    // Light contribution is the highest when facing the light source
+    intensity * light_direction.angle_from(raycast.normal).cos()
 }

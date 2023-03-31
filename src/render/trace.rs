@@ -16,7 +16,7 @@ pub fn render(mut scene: Scene) -> ImageResult<()> {
     scene.canvas.save("test.png")
 }
 
-fn get_raycast(scene: &Scene, x: i32, y: i32) -> Raycast {
+fn get_raycast(scene: &Scene, x: i32, y: i32) -> Option<Raycast> {
     let origin = scene.origin;
     let direction = Vector3::new(
         x as f64 * scene.viewport.x / scene.canvas.width as f64,
