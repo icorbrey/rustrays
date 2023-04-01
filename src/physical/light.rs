@@ -9,17 +9,6 @@ pub enum Light {
     Directional { intensity: f64, direction: Vector3 },
 }
 
-pub fn get_light_details(light: Light, raycast: Raycast) -> (f64, Option<Vector3>) {
-    match light {
-        Light::Ambient { intensity } => (intensity, None),
-        Light::Point { intensity, origin } => (intensity, Some(origin - raycast.point)),
-        Light::Directional {
-            intensity,
-            direction,
-        } => (intensity, Some(direction)),
-    }
-}
-
 pub fn compute_is_occluded(scene: &Scene, light: Light, raycast: Raycast) -> bool {
     if let (_, Some(direction)) = get_light_details(light, raycast) {
         Raycast::compute(scene, raycast.point, direction, (0.001, f64::INFINITY)).is_some()
@@ -52,7 +41,7 @@ pub fn compute_specular_reflection(
     let (intensity, direction) = get_light_details(light, raycast);
 
     if let Some(direction) = direction {
-        let reflection = raycast.normal * raycast.normal.dot(direction) * 2 - direction;
+        let reflection = get_reflection(raycast.normal, direction);
 
         // Don't reflect off of surfaces pointing away from the light
         if reflection.dot(raycast.view) < 0.0 {
@@ -68,4 +57,19 @@ pub fn compute_specular_reflection(
     } else {
         0.0
     }
+}
+
+pub fn get_light_details(light: Light, raycast: Raycast) -> (f64, Option<Vector3>) {
+    match light {
+        Light::Ambient { intensity } => (intensity, None),
+        Light::Point { intensity, origin } => (intensity, Some(origin - raycast.point)),
+        Light::Directional {
+            intensity,
+            direction,
+        } => (intensity, Some(direction)),
+    }
+}
+
+pub fn get_reflection(normal: Vector3, direction: Vector3) -> Vector3 {
+    normal * normal.dot(direction) * 2 - direction
 }

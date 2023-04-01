@@ -4,6 +4,7 @@ use super::vector3::Vector3;
 
 #[derive(Copy, Clone)]
 pub struct Raycast {
+    pub reflection: Vector3,
     pub direction: Vector3,
     pub normal: Vector3,
     pub origin: Vector3,
@@ -44,16 +45,21 @@ impl Raycast {
             return None;
         }
 
-        let point = origin + direction * closest_t.unwrap();
         let object = closest_object.unwrap();
+        let point = origin + direction * closest_t.unwrap();
+
+        let view = -direction;
+        let normal = object.compute_normal(point);
+        let reflection = normal * normal.dot(view) * 2 - view;
 
         Some(Raycast {
-            normal: object.compute_normal(point),
-            view: -direction,
+            reflection,
             direction,
+            normal,
             object,
             origin,
             point,
+            view,
         })
     }
 }

@@ -1,10 +1,11 @@
 use std::marker::PhantomData;
 
-use crate::math::vector3::Vector3;
+use crate::math::{color::Color, vector3::Vector3};
 
 use super::{canvas::Canvas, light::Light, object::Object};
 
 pub struct Scene {
+    pub background_color: Color,
     pub objects: Vec<Object>,
     pub lights: Vec<Light>,
     pub viewport: Vector3,
@@ -13,8 +14,9 @@ pub struct Scene {
 }
 
 impl Scene {
-    pub fn new() -> UnresolvedScene<Unfulfilled, Unfulfilled> {
+    pub fn new() -> UnresolvedScene<No, No, No> {
         UnresolvedScene {
+            background_color: None,
             marker: PhantomData,
             objects: vec![],
             lights: vec![],
@@ -25,12 +27,14 @@ impl Scene {
     }
 }
 
-pub struct UnresolvedScene<HasCanvas, HasViewport>
+pub struct UnresolvedScene<HasCanvas, HasViewport, HasBackgroundColor>
 where
     HasCanvas: SceneRequirement,
     HasViewport: SceneRequirement,
+    HasBackgroundColor: SceneRequirement,
 {
-    pub marker: PhantomData<(HasCanvas, HasViewport)>,
+    pub marker: PhantomData<(HasCanvas, HasViewport, HasBackgroundColor)>,
+    pub background_color: Option<Color>,
     pub viewport: Option<Vector3>,
     pub origin: Option<Vector3>,
     pub canvas: Option<Canvas>,
@@ -38,28 +42,32 @@ where
     pub lights: Vec<Light>,
 }
 
-impl<A> UnresolvedScene<Unfulfilled, A>
+impl<A, B> UnresolvedScene<No, A, B>
 where
     A: SceneRequirement,
+    B: SceneRequirement,
 {
-    pub fn add_canvas(self, canvas: Canvas) -> UnresolvedScene<Fulfilled, A> {
+    pub fn add_canvas(self, canvas: Canvas) -> UnresolvedScene<Yes, A, B> {
         UnresolvedScene {
+            background_color: self.background_color,
             viewport: self.viewport,
             objects: self.objects,
             canvas: Some(canvas),
-            origin: self.origin,
             lights: self.lights,
+            origin: self.origin,
             marker: PhantomData,
         }
     }
 }
 
-impl<A> UnresolvedScene<A, Unfulfilled>
+impl<A, B> UnresolvedScene<A, No, B>
 where
     A: SceneRequirement,
+    B: SceneRequirement,
 {
-    pub fn add_viewport(self, viewport: Vector3, origin: Vector3) -> UnresolvedScene<A, Fulfilled> {
+    pub fn add_viewport(self, viewport: Vector3, origin: Vector3) -> UnresolvedScene<A, Yes, B> {
         UnresolvedScene {
+            background_color: self.background_color,
             viewport: Some(viewport),
             objects: self.objects,
             origin: Some(origin),
@@ -70,25 +78,45 @@ where
     }
 }
 
-impl<A, B> UnresolvedScene<A, B>
+impl<A, B> UnresolvedScene<A, B, No>
 where
     A: SceneRequirement,
     B: SceneRequirement,
 {
-    pub fn add_object(mut self, object: Object) -> UnresolvedScene<A, B> {
+    pub fn add_background_color(self, color: Color) -> UnresolvedScene<A, B, Yes> {
+        UnresolvedScene {
+            background_color: Some(color),
+            viewport: self.viewport,
+            objects: self.objects,
+            canvas: self.canvas,
+            lights: self.lights,
+            origin: self.origin,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<A, B, C> UnresolvedScene<A, B, C>
+where
+    A: SceneRequirement,
+    B: SceneRequirement,
+    C: SceneRequirement,
+{
+    pub fn add_object(mut self, object: Object) -> UnresolvedScene<A, B, C> {
         self.objects.push(object);
         self
     }
 
-    pub fn add_light(mut self, light: Light) -> UnresolvedScene<A, B> {
+    pub fn add_light(mut self, light: Light) -> UnresolvedScene<A, B, C> {
         self.lights.push(light);
         self
     }
 }
 
-impl UnresolvedScene<Fulfilled, Fulfilled> {
+impl UnresolvedScene<Yes, Yes, Yes> {
     pub fn crystalize(self) -> Scene {
         Scene {
+            background_color: self.background_color.unwrap(),
             viewport: self.viewport.unwrap(),
             origin: self.origin.unwrap(),
             canvas: self.canvas.unwrap(),
@@ -100,8 +128,8 @@ impl UnresolvedScene<Fulfilled, Fulfilled> {
 
 pub trait SceneRequirement {}
 
-pub struct Fulfilled;
-pub struct Unfulfilled;
+pub struct Yes;
+pub struct No;
 
-impl SceneRequirement for Fulfilled {}
-impl SceneRequirement for Unfulfilled {}
+impl SceneRequirement for Yes {}
+impl SceneRequirement for No {}

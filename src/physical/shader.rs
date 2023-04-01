@@ -6,39 +6,27 @@ use super::{
 };
 
 #[derive(Copy, Clone)]
-pub enum Shader {
-    Lit {
-        specular_reflection: Option<f64>,
-        reflectivity: f64,
-        color: Color,
-    },
+pub struct Shader {
+    pub specular_reflection: Option<f64>,
+    pub reflectivity: Option<f64>,
+    pub color: Color,
 }
 
-pub fn compute_shading(scene: &Scene, raycast: Option<Raycast>) -> Color {
-    match raycast {
-        Some(raycast) => match raycast.object.get_shader() {
-            Shader::Lit {
-                color,
-                specular_reflection,
-                ..
-            } => {
-                let mut illumination = 0.0;
+pub fn compute_shading(scene: &Scene, raycast: Raycast) -> Color {
+    let shader = raycast.object.get_shader();
+    let mut illumination = 0.0;
 
-                for light in &scene.lights {
-                    if compute_is_occluded(scene, *light, raycast) {
-                        continue;
-                    }
+    for light in &scene.lights {
+        if compute_is_occluded(scene, *light, raycast) {
+            continue;
+        }
 
-                    illumination += compute_diffusion(*light, raycast);
+        illumination += compute_diffusion(*light, raycast);
 
-                    if let Some(s) = specular_reflection {
-                        illumination += compute_specular_reflection(*light, raycast, s);
-                    }
-                }
-
-                color * illumination
-            }
-        },
-        None => Color::new(255, 255, 255),
+        if let Some(s) = shader.specular_reflection {
+            illumination += compute_specular_reflection(*light, raycast, s);
+        }
     }
+
+    shader.color * illumination
 }
