@@ -2,6 +2,7 @@ use math::{color::Color, vector3::Vector3};
 use physical::{canvas::Canvas, light::Light, object::Object, scene::Scene, shader::Shader};
 use render::trace::render;
 
+mod gui;
 mod math;
 mod physical;
 mod render;
@@ -57,6 +58,8 @@ fn main() {
             },
         })
         .crystalize();
+
+    gui::initialize();
 
     match render(scene) {
         Ok(()) => println!("Saved successfully."),
